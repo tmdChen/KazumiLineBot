@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*-coding: utf-8 -*-
 
 from linepy import *
 from datetime import datetime
@@ -48,18 +48,9 @@ settingsOpen = codecs.open("temp.json","r","utf-8")
 read = json.load(readOpen)
 settings = json.load(settingsOpen)
 
-
-myProfile = {
-	"displayName": "",
-	"statusMessage": "",
-	"pictureStatus": ""
-}
-
 msg_dict = {}
 bl = [""]
-myProfile["displayName"] = clProfile.displayName
-myProfile["statusMessage"] = clProfile.statusMessage
-myProfile["pictureStatus"] = clProfile.pictureStatus
+
 #==============================================================================#
 def restartBot():
     print ("[ INFO ] BOT RESETTED")
@@ -92,7 +83,7 @@ def sendMessageWithMention(to, mid):
         logError(error)
 def helpmessage():
     helpMessage = """╔══════════════
-╠♥ ✿✿✿ すずかの Bot ✿✿✿ ♥
+╠♥ ✿✿✿ すずずかの單體半垢 ✿✿✿ ♥
 ║
 ╠══✪〘 Help Message 〙✪═══
 ║
@@ -129,6 +120,7 @@ def helpmessage():
 ╠➥ Ban @ 加入黑單
 ╠➥ Unban @ 取消黑單
 ╠➥ Banlist 查看黑單
+╠➥ CleanBan 清空黑單
 ╠➥ Nkban 踢除黑單
 ║
 ╠✪〘 Group 〙✪════════
@@ -142,7 +134,8 @@ def helpmessage():
 ╠➥ GroupMemberList 成員名單
 ╠➥ GroupInfo 群組資料
 ╠➥ Gn (文字) 更改群名
-╠➥ Nk @ 踢
+╠➥ Nk @ 單、多踢
+╠➥ Zk 踢出0字元
 ╠➥ Byeall翻群
 ╠➥ Inv (mid) 透過mid邀請
 ╠➥ Cancel 取消所有邀請
@@ -154,20 +147,36 @@ def helpmessage():
 ╠➥ MimicAdd @ 新增模仿名單
 ╠➥ MimicDel @ 模仿名單刪除
 ╠➥ Tagall 標註全體
+╠➥ Zc 發送0字元友資
 ╠➥ Setread 已讀點設置
-╠➥ Readcancel 取消偵測
+╠➥ Cancelread 取消偵測
 ╠➥ Checkread 已讀偵測
+╠➥ Gbc: 群組廣播
+╠➥ Fbc: 好友廣播
 ║
-╠✪〘 Media 〙✪════════
-╠➥ Calender 日曆
-╠➥ CheckDate「Date」日子計算
+╠✪〘 Admin 〙✪═════════
+╠➥ Adminadd @ 新增權限
+╠➥ Admindel @ 刪除權限
+╠➥ Adminlist 查看權限表
 ║
 ╚═〘 Created By: ©ながみ すずか™  〙"""
     return helpMessage
 wait = {
     "share":False,
-    "sender" :{},
+    "qrprotect":False,
 }
+wait2 = {
+    'readPoint':{},
+    'readMember':{},
+    'setTime':{},
+    'ROM':{}
+}
+setTime = {}
+setTime = wait2['setTime']
+
+def cTime_to_datetime(unixtime):
+    return datetime.datetime.fromtimestamp(int(str(unixtime)[:len(str(unixtime))-3]))
+
 admin =['ud5ff1dff426cf9e3030c7ac2a61512f0','ua10c2ad470b4b6e972954e1140ad1891',clMID]
 owners = ["ua10c2ad470b4b6e972954e1140ad1891","ud5ff1dff426cf9e3030c7ac2a61512f0"]
 #if clMID not in owners:
@@ -248,7 +257,7 @@ def lineBot(op):
                 if text.lower() == 'help':
                     helpMessage = helpmessage()
                     cl.sendMessage(to, str(helpMessage))
-                    cl.sendMessage(msg.to,"我的作者:")
+                    cl.sendMessage(to,"我的作者 :")
                     cl.sendContact(to,"ua10c2ad470b4b6e972954e1140ad1891")
                 elif text.lower() == 'bye':
                     if sender == "ua10c2ad470b4b6e972954e1140ad1891":
@@ -353,33 +362,24 @@ def lineBot(op):
                 elif text.lower() == 'share off':
                     wait["share"] = False
                     cl.sendMessage(to, "已關閉分享")
+                elif text.lower() == 'detect on':
+                    wait["detectMention"] = True
+                    cl.sendMessage(to, "已開啟標註偵測")
+                elif text.lower() == 'detect off':
+                    wait["detectMention"] = False
+                    cl.sendMessage(to, "已關閉標註偵測")
+
 #==============================================================================#
-                elif text.lower() == 'adminadd ':
-                    targets = []
-                    key = eval(msg.contentMetadata["MENTION"])
-                    key["MENTIONEES"][0]["M"]
-                    for x in key["MENTIONEES"]:
-                        target.append(x["M"])
-                    for target in targets:
-                        try:
-                            admin.append('[target]')
-                            cl.sendMessage(msg.to,"已加入權限!")
-                        except:
-                            cl.sendMessage(msg.to,"添加失敗 !")
-                elif text.lower() == 'demin ':
-                    targets = []
-                    key = eval(msg.contentMetadata["MENTION"])
-                    key["MENTIONEES"][0]["M"]
-                    for x in key["MENTIONEES"]:
-                        targets.append(x["M"])
-                    for target in targets:
-                        try:
-                            del admin[target]
-                            cl.sendMessage(msg.to,"已加入權限!")
-                            break
-                        except:
-                            cl.sendMessage(msg.to,"已停止權限!")
-                            break
+                elif msg.text.lower().startswith("adminadd "):
+                    MENTION = eval(msg.contentMetadata['MENTION'])
+                    inkey = MENTION['MENTIONEES'][0]['M']
+                    admin.append(str(inkey))
+                    cl.sendMessage(to, "已獲得權限！")
+                elif msg.text.lower().startswith("admindel "):
+                    MENTION = eval(msg.contentMetadata['MENTION'])
+                    inkey = MENTION['MENTIONEES'][0]['M']
+                    admin.remove(str(inkey))
+                    cl.sendMessage(to, "已取消權限！")
                 elif text.lower() == 'adminlist':
                     if admin == []:
                         cl.sendMessage(to,"無擁有權限者!")
@@ -388,7 +388,6 @@ def lineBot(op):
                         for mi_d in admin:
                             mc += "\n╠ "+cl.getContact(mi_d).displayName
                         cl.sendMessage(to,mc + "\n╚══[ Finish ]")
-
 #==============================================================================#
                 elif text.lower() == 'me':
                     sendMessageWithMention(to, clMID)
@@ -452,31 +451,12 @@ def lineBot(op):
                         for ls in lists:
                             contact = cl.getContact(ls)
                             cl.sendMessage(msg.to, "[ 個簽 ]\n" + contact.statusMessage)
+                        for mention in mentionees:
+                            if mention["M"] not in lists:
+                                lists.append(mention["M"])
                         for ls in lists:
-                            path = "http://dl.profile.cl.naver.jp/" + cl.getContact(ls).pictureStatus
+                            path = "http://dl.profile.line-cdn.net/" + cl.getContact(ls).pictureStatus
                             cl.sendImageWithURL(msg.to, str(path))
-                        for ls in lists:
-                            path = cl.getProfileCoverURL(ls)
-                            pmath = "http://dl.profile.cl.naver.jp/" + cl.getContact(ls).pictureStatus
-                            cl.sendImageWithURL(msg.to, path)
-                    try:
-                            key = eval(msg.contentMetadata["MENTION"])
-                            u = key["MENTIONEES"][0]["M"]
-                            cname = cl.getContact(u).displayName
-                            cmid = cl.getContact(u).mid
-                            cstatus = cl.getContact(u).statusMessage
-                            cpic = cl.getContact(u).picturePath
-                            cl.sendMessage(receiver, 'Nama : '+cname+'\nMID : '+cmid+'\nStatus Msg : '+cstatus+'\nPicture : http://dl.profile.line.naver.jp'+cpic)
-                            cl.sendMessage(receiver, None, contentMetadata={'mid': cmid}, contentType=13)
-                            if cl.getContact(u).videoProfile != None:
-                                cl.sendVideoWithURL(receiver, 'http://dl.profile.line.naver.jp'+cpic+'/vp.small')
-                            else:
-                                cl.sendImageWithURL(receiver, 'http://dl.profile.line.naver.jp'+cpic)
-                    except Exception as e:
-                            cl.sendMessage(receiver, str(e))
-
-
-                    if line != None:
                         if 'MENTION' in msg.contentMetadata.keys()!= None:
                             names = re.findall(r'@(\w+)', text)
                             mention = ast.literal_eval(msg.contentMetadata['MENTION'])
@@ -488,29 +468,7 @@ def lineBot(op):
                             for ls in lists:
                                 path = cl.getProfileCoverURL(ls)
                                 cl.sendImageWithURL(msg.to, str(path))
-                elif msg.text.lower().startswith("cloneprofile "):
-                    if 'MENTION' in msg.contentMetadata.keys()!= None:
-                        names = re.findall(r'@(\w+)', text)
-                        mention = ast.literal_eval(msg.contentMetadata['MENTION'])
-                        mentionees = mention['MENTIONEES']
-                        for mention in mentionees:
-                            contact = mention["M"]
-                            break
-                        try:
-                            cl.cloneContactProfile(contact)
-                            cl.sendMessage(msg.to, "Berhasil clone member tunggu beberapa saat sampai profile berubah")
-                        except:
-                            cl.sendMessage(msg.to, "Gagal clone member")
-                elif text.lower() == 'restoreprofile':
-                    try:
-                        clProfile.displayName = str(myProfile["displayName"])
-                        clProfile.statusMessage = str(myProfile["statusMessage"])
-                        clProfile.pictureStatus = str(myProfile["pictureStatus"])
-                        cl.updateProfileAttribute(8, clProfile.pictureStatus)
-                        cl.updateProfile(clProfile)
-                        cl.sendMessage(msg.to, "Berhasil restore profile tunggu beberapa saat sampai profile berubah")
-                    except:
-                        cl.sendMessage(msg.to, "Gagal restore profile")
+                
 #==============================================================================#
                 elif msg.text.lower().startswith("mimicadd "):
                     targets = []
@@ -660,6 +618,25 @@ def lineBot(op):
                             cl.kickoutFromGroup(msg.to,[target])
                         except:
                             cl.sendMessage(to,"Error")
+                
+                elif "Zk" in msg.text:
+                    gs = cl.getGroup(to)
+                    targets = []
+                    for g in gs.members:
+                        if g.displayName in "":
+                            targets.append(g.mid)
+                    if targets == []:
+                        pass
+                    else:
+                        for target in targets:
+                            if target in admin:
+                                pass
+                            else:
+                                try:
+                                    cl.kickoutFromGroup(to,[target])
+                                except:
+                                    pass
+
                 elif msg.text.lower().startswith("ri "):
                     targets = []
                     key = eval(msg.contentMetadata["MENTION"])
@@ -726,70 +703,48 @@ def lineBot(op):
                             txt += u'@Alin \n'
                         cl.sendMessage(to, text=txt, contentMetadata={u'MENTION': json.dumps({'MENTIONEES':b})}, contentType=0)
                         cl.sendMessage(to, "Total {} Mention".format(str(len(nama))))
+                elif text.lower() == 'zt':
+                    gs = cl.getGroup(to)
+                    targets = []
+                    for g in gs.members:
+                        if g.displayName in "":
+                            targets.append(g.mid)
+                    if targets == []:
+                        pass
+                    else:
+                        for target in targets:
+                            sendMessageWithMention(to,target)
+                elif text.lower() == 'zm':
+                    gs = cl.getGroup(to)
+                    targets = []
+                    for g in gs.members:
+                        if g.displayName in "":
+                            targets.append(g.mid)
+                    if targets == []:
+                        pass
+                    else:
+                        for mi_d in targets:
+                           cl.sendContect(to,mi_d)
                 elif text.lower() == 'setread':
-                    tz = pytz.timezone("Asia/Jakarta")
-                    timeNow = datetime.now(tz=tz)
-                    day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday","Friday", "Saturday"]
-                    hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
-                    bulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
-                    hr = timeNow.strftime("%A")
-                    bln = timeNow.strftime("%m")
-                    for i in range(len(day)):
-                        if hr == day[i]: hasil = hari[i]
-                    for k in range(0, len(bulan)):
-                        if bln == str(k): bln = bulan[k-1]
-                    readTime = hasil + ", " + timeNow.strftime('%d') + " - " + bln + " - " + timeNow.strftime('%Y') + "\nJam : [ " + timeNow.strftime('%H:%M:%S') + " ]"
-                    if msg.to in read['readPoint']:
-                            try:
-                                del read['readPoint'][msg.to]
-                                del read['readMember'][msg.to]
-                                del read['readTime'][msg.to]
-                            except:
-                                pass
-                            read['readPoint'][msg.to] = msg.id
-                            read['readMember'][msg.to] = ""
-                            read['readTime'][msg.to] = datetime.now().strftime('%H:%M:%S')
-                            read['ROM'][msg.to] = {}
-                            with open('read.json', 'w') as fp:
-                                json.dump(read, fp, sort_keys=True, indent=4)
-                                cl.sendMessage(msg.to,"偵測點已設置")
-                    else:
-                        try:
-                            del read['readPoint'][msg.to]
-                            del read['readMember'][msg.to]
-                            del read['readTime'][msg.to]
-                        except:
-                            pass
-                        read['readPoint'][msg.to] = msg.id
-                        read['readMember'][msg.to] = ""
-                        read['readTime'][msg.to] = datetime.now().strftime('%H:%M:%S')
-                        read['ROM'][msg.to] = {}
-                        with open('read.json', 'w') as fp:
-                            json.dump(read, fp, sort_keys=True, indent=4)
-                            cl.sendMessage(msg.to, "Set reading point:\n" + readTime)
-                elif text.lower() == 'readcancel':
-                    tz = pytz.timezone("Asia/Jakarta")
-                    timeNow = datetime.now(tz=tz)
-                    day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday","Friday", "Saturday"]
-                    hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
-                    bulan = ["January", "February", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
-                    hr = timeNow.strftime("%A")
-                    bln = timeNow.strftime("%m")
-                    for i in range(len(day)):
-                        if hr == day[i]: hasil = hari[i]
-                    for k in range(0, len(bulan)):
-                        if bln == str(k): bln = bulan[k-1]
-                    readTime = hasil + ", " + timeNow.strftime('%d') + " - " + bln + " - " + timeNow.strftime('%Y') + "\nJam : [ " + timeNow.strftime('%H:%M:%S') + " ]"
-                    if msg.to not in read['readPoint']:
-                        cl.sendMessage(msg.to,"偵測點已取消")
-                    else:
-                        try:
-                            del read['readPoint'][msg.to]
-                            del read['readMember'][msg.to]
-                            del read['readTime'][msg.to]
-                        except:
-                              pass
-                        cl.sendMessage(msg.to, "Delete reading point:\n" + readTime)
+                    cl.sendMessage(msg.to, "已讀點設置成功")
+                    try:
+                        del wait2['readPoint'][msg.to]
+                        del wait2['readMember'][msg.to]
+                    except:
+                        pass
+                    now2 = datetime.now()
+                    wait2['readPoint'][msg.to] = msg.id
+                    wait2['readMember'][msg.to] = ""
+                    wait2['setTime'][msg.to] = datetime.strftime(now2,"%H:%M")
+                    wait2['ROM'][msg.to] = {}
+                elif text.lower() == "cancelread":
+                    cl.sendMessage(to, "已讀點已刪除")
+                    try:
+                        del wait2['readPoint'][msg.to]
+                        del wait2['readMember'][msg.to]
+                        del wait2['setTime'][msg.to]
+                    except:
+                        pass
                 elif text.lower() == 'resetread':
                     tz = pytz.timezone("Asia/Jakarta")
                     timeNow = datetime.now(tz=tz)
@@ -813,48 +768,18 @@ def lineBot(op):
                         cl.sendMessage(msg.to, "Reset reading point:\n" + readTime)
                     else:
                         cl.sendMessage(msg.to, "偵測點未設置?")
-                elif text.lower() == 'checkread':
-                    tz = pytz.timezone("Asia/Jakarta")
-                    timeNow = datetime.now(tz=tz)
-                    day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday","Friday", "Saturday"]
-                    hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
-                    bulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
-                    hr = timeNow.strftime("%A")
-                    bln = timeNow.strftime("%m")
-                    for i in range(len(day)):
-                        if hr == day[i]: hasil = hari[i]
-                    for k in range(0, len(bulan)):
-                        if bln == str(k): bln = bulan[k-1]
-                    readTime = hasil + ", " + timeNow.strftime('%d') + " - " + bln + " - " + timeNow.strftime('%Y') + "\nJam : [ " + timeNow.strftime('%H:%M:%S') + " ]"
-                    if receiver in read['readPoint']:
-                        if read["ROM"][receiver].items() == []:
-                            cl.sendMessage(receiver,"[ 已讀的人 ]:\nNone")
+                elif msg.text in ["checkread","Checkread"]:
+                    if msg.to in wait2['readPoint']:
+                        if wait2["ROM"][msg.to].items() == []:
+                            chiya = ""
                         else:
-                            chiya = []
-                            for rom in read["ROM"][receiver].items():
-                                chiya.append(rom[1])
-                            cmem = cl.getContacts(chiya) 
-                            zx = ""
-                            zxc = ""
-                            zx2 = []
-                            xpesan = '[ 已讀的人 ]:\n'
-                        for x in range(len(cmem)):
-                            xname = str(cmem[x].displayName)
-                            pesan = ''
-                            pesan2 = pesan+"@c\n"
-                            xlen = str(len(zxc)+len(xpesan))
-                            xlen2 = str(len(zxc)+len(pesan2)+len(xpesan)-1)
-                            zx = {'S':xlen, 'E':xlen2, 'M':cmem[x].mid}
-                            zx2.append(zx)
-                            zxc += pesan2
-                        text = xpesan+ zxc + "\n[ 已讀時間 ]: \n" + readTime
-                        try:
-                            cl.sendMessage(receiver, text, contentMetadata={'MENTION':str('{"MENTIONEES":'+json.dumps(zx2).replace(' ','')+'}')}, contentType=0)
-                        except Exception as error:
-                            print (error)
-                        pass
+                            chiya = ""
+                            for rom in wait2["ROM"][msg.to].items():
+                                chiya += rom[1] + "\n"
+                        cl.sendMessage(msg.to, "[已讀順序]%s\n\n[已讀的人]:\n%s\n查詢時間:[%s]" % (wait2['readMember'][msg.to],chiya,setTime[msg.to]))
                     else:
-                        cl.sendMessage(receiver,"尚未設置偵測點")
+                        cl.sendMessage(msg.to, "請輸入setread")
+
 #==============================================================================#
                 elif msg.text.lower().startswith("ban "):
                     targets = []
@@ -906,15 +831,9 @@ def lineBot(op):
                         cl.kickoutFromGroup(msg.to,[jj])
                     cl.sendMessage(msg.to,"Blacklist kicked out")
                 elif text.lower() == 'cleanban':
-                    settings["blacklist"] == {ok}
                     for mi_d in settings["blacklist"]:
-                        try:
-                            del settings["blacklist"][mi_d]
-                            cl.sendMessage(msg.to,"已清空黑單!")
-                            break
-                        except:
-                            cl.sendMessage(msg.to,"刪除失敗 !")
-                            break
+                        settings["blacklist"] = {}
+                    cl.sendMessage(to, "已清空黑名單")
                 elif text.lower() == 'banmidlist':
                     if settings["blacklist"] == {}:
                         cl.sendMessage(msg.to,"無黑單成員!")
@@ -926,6 +845,16 @@ def lineBot(op):
 
 
 #==============================================================================#
+                elif "Fbc:" in msg.text:
+                    bctxt = text.replace("Fbc:","")
+                    t = cl.getAllContactIds()
+                    for manusia in t:
+                        cl.sendMessage(manusia,(bctxt))
+                elif "Gbc:" in msg.text:
+                    bctxt = text.replace("Gbc:","")
+                    n = cl.getGroupIdsJoined()
+                    for manusia in n:
+                        cl.sendMessage(manusia,(bctxt))
                 elif "Copy " in msg.text:
                     targets = []
                     key = eval(msg.contentMetadata["MENTION"])
@@ -944,11 +873,10 @@ def lineBot(op):
                             lol = cl.getProfile()
                             lol.statusMessage = Y
                             cl.updateProfile(lol)
+                            path = "http://dl.profile.line-cdn.net/" + contact.pictureStatus
+
                             P = contact.pictureStatus
-                            pic = cl.getProfile()
-                            pic.pictureStatus = P
                             cl.updateProfilePicture(P)
-                            cl.cloneContactProfile(target)
                         except Exception as e:
                             cl.sendMessage(to, "Failed!")
                 elif text.lower() == 'cc9487':
@@ -958,33 +886,7 @@ def lineBot(op):
                     else:
                         pass
 #==============================================================================#
-                elif text.lower() == 'calender':
-                    tz = pytz.timezone("Asia/Makassar")
-                    timeNow = datetime.now(tz=tz)
-                    day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday","Friday", "Saturday"]
-                    hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
-                    bulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
-                    hr = timeNow.strftime("%A")
-                    bln = timeNow.strftime("%m")
-                    for i in range(len(day)):
-                        if hr == day[i]: hasil = hari[i]
-                    for k in range(0, len(bulan)):
-                        if bln == str(k): bln = bulan[k-1]
-                    readTime = hasil + ", " + timeNow.strftime('%d') + " - " + bln + " - " + timeNow.strftime('%Y') + "\nJam : [ " + timeNow.strftime('%H:%M:%S') + " ]"
-                    cl.sendMessage(msg.to, readTime)
-                elif "checkdate" in msg.text.lower():
-                    sep = msg.text.split(" ")
-                    tanggal = msg.text.replace(sep[0] + " ","")
-                    r=requests.get('https://script.google.com/macros/exec?service=AKfycbw7gKzP-WYV2F5mc9RaR7yE3Ve1yN91Tjs91hp_jHSE02dSv9w&nama=ervan&tanggal='+tanggal)
-                    data=r.text
-                    data=json.loads(data)
-                    ret_ = "╔══[ D A T E ]"
-                    ret_ += "\n╠ Date Of Birth : {}".format(str(data["data"]["lahir"]))
-                    ret_ += "\n╠ Age : {}".format(str(data["data"]["usia"]))
-                    ret_ += "\n╠ Birthday : {}".format(str(data["data"]["ultah"]))
-                    ret_ += "\n╠ Zodiak : {}".format(str(data["data"]["zodiak"]))
-                    ret_ += "\n╚══[ Success ]"
-                    cl.sendMessage(to, str(ret_))
+                
 #==============================================================================#
         if op.type == 26:
             msg = op.message
@@ -1018,7 +920,7 @@ def lineBot(op):
                             if clMID in mention["M"]:
                                 if settings["detectMention"] == True:
                                     contact = cl.getContact(sender)
-                                    cl.sendMessage(to, "sundala nu")
+                                    cl.sendMessage(to, "標毛?")
                                     sendMessageWithMention(to, contact.mid)
                                 break
             try:
@@ -1062,6 +964,19 @@ def lineBot(op):
                     backupData()
                 else:
                    pass
+            except:
+                pass
+            try:
+                if op.param1 in wait2['readPoint']:
+                    Name = cl.getContact(op.param2).displayName
+                    if Name in wait2['readMember'][op.param1]:
+                        pass
+                    else:
+                        wait2['readMember'][op.param1] += "\n[※]" + Name
+                        wait2['ROM'][op.param1][op.param2] = "[※]" + Name
+                        print (time.time() + name)
+                else:
+                    pass
             except:
                 pass
     except Exception as error:
