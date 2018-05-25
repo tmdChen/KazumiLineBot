@@ -83,7 +83,7 @@ def sendMessageWithMention(to, mid):
         logError(error)
 def helpmessage():
     helpMessage = """╔══════════════
-╠♥ ✿✿✿ すずずかの單體半垢 ✿✿✿ ♥
+╠♥ ✿✿✿ すずかの單體半垢 ✿✿✿ ♥
 ║
 ╠══✪〘 Help Message 〙✪═══
 ║
@@ -104,6 +104,10 @@ def helpmessage():
 ╠➥ AutoRead On/Off 自動已讀
 ╠➥ Share On/Off 公開/私人
 ╠➥ ReRead On/Off 查詢收回
+╠➥ QrProtect On/Off 網址保護
+╠➥ Invprotect On/Off 邀請保護
+╠➥ Getmid On/Off 取得mid
+╠➥ DetectMention On/Off 標註偵測
 ║
 ╠✪〘 Self 〙✪═════════
 ╠➥ Me 我的連結
@@ -163,7 +167,12 @@ def helpmessage():
     return helpMessage
 wait = {
     "share":False,
+    "reread":True,
     "qrprotect":False,
+    "invprotect":False,
+    "detectMention":True,
+    "getmid":True,
+    "timeline":True,
 }
 wait2 = {
     'readPoint':{},
@@ -191,9 +200,27 @@ def lineBot(op):
             print ("[ 5 ] NOTIFIED ADD CONTACT")
             if settings["autoAdd"] == True:
                 cl.sendMessage(op.param1, "感謝您加入本帳為好友w".format(str(cl.getContact(op.param1).displayName)))
-        if op.type == 13:
-            print ("[ 13 ] NOTIFIED INVITE GROUP")
+        if op.type == 11:
             group = cl.getGroup(op.param1)
+            contact = cl.getContact(op.param2)
+            if wait["qrprotect"] == True:
+                if op.param2 in admin:
+                    pass
+                else:
+                    gs = cl.getGroup(op.param1)
+                    cl.kickoutFromGroup(op.param1,[op.param2])
+                    gs.preventJoinByTicket = True
+                    cl.updateGroup(gs)
+        if op.type == 13:
+            contact1 = cl.getContact(op.param2)
+            contact2 = cl.getContact(op.param3)
+            group = cl.getGroup(op.param1)
+            if wait["invprotect"] == True:
+                if op.param2 in admin:
+                    pass
+                else:
+                    cl.cancelGroupInvitation(op.param1,[op.param3])
+            print ("[ 13 ] NOTIFIED INVITE GROUP")
             if clMID in op.param3:
                 if settings["autoJoin"] == True:
                     cl.acceptGroupInvitation(op.param1)
@@ -209,12 +236,13 @@ def lineBot(op):
                     cl.cancelGroupInvitation(op.param1, gInviMids)
                     cl.sendMessage(msg.to,"被邀請者黑單中...")
         if op.type == 19:
-            if op.param2 not in owners:
-                if op.param2 in owners:
+            if op.param2 not in admin:
+                if op.param2 in admin:
                     pass
                 elif settings["protect"] == True:
                     settings["blacklist"][op.param2] = True
                     cl.kickoutFromGroup(op.param1,[op.param2])
+                    cl.inviteIntoGroup(op.param1,[op.param3])
                 else:
                     cl.sendMessage(op.param1,"")
             else:
@@ -231,7 +259,11 @@ def lineBot(op):
             else:
                 K0 = admin
         if op.type == 25 :
-            print ("sended:" + str(msg.text))
+            if msg.toType ==2:
+                g = cl.getGroup(op.message.to)
+                print ("sended:".format(str(g.name)) + str(msg.text))
+            else:
+                print ("sended:" + str(msg.text))
         if op.type == 26:
             msg =op.message
             pop = cl.getContact(msg._from)
@@ -312,7 +344,15 @@ def lineBot(op):
                         else: ret_ += "\n╠ Auto Leave ❌"
                         if settings["autoRead"] == True: ret_ += "\n╠ Auto Read ✅"
                         else: ret_ += "\n╠ Auto Read ❌"
-                        if settings["reread"] ==True: ret_+="\n╠ Reread ✅"
+                        if settings["protect"] ==True: ret_+="\n╠ Protect ✅"
+                        else: ret_ += "\n╠ Protect ❌"
+                        if wait["qrprotect"] ==True: ret_+="\n╠ QrProtect ✅"
+                        else: ret_ += "\n╠ QrProtect ❌"
+                        if wait["invprotect"] ==True: ret_+="\n╠ InviteProtect ✅"
+                        else: ret_ += "\n╠ InviteProtect ❌"
+                        if wait["detectMention"] ==True: ret_+="\n╠ DetectMention ✅"
+                        else: ret_ += "\n╠ DetectMention ❌"
+                        if wait["reread"] ==True: ret_+="\n╠ Reread ✅"
                         else: ret_ += "\n╠ Reread ❌"
                         if wait["share"] ==True: ret_+="\n╠ Share ✅"
                         else: ret_ += "\n╠ Share ❌"
@@ -345,17 +385,17 @@ def lineBot(op):
                     settings["autoRead"] = False
                     cl.sendMessage(to, "Auto Read off success")
                 elif text.lower() == 'reread on':
-                    settings["reread"] = True
+                    wait["reread"] = True
                     cl.sendMessage(to,"reread on success")
                 elif text.lower() == 'reread off':
-                    settings["reread"] = False
+                    wait["reread"] = False
                     cl.sendMessage(to,"reread off success")
                 elif text.lower() == 'protect on':
                     settings["protect"] = True
-                    cl.sendMessage(to, "Protect on success")
+                    cl.sendMessage(to, "踢人保護開啟")
                 elif text.lower() == 'protect off':
                     settings["protect"] = False
-                    cl.sendMessage(to, "Protect off success")
+                    cl.sendMessage(to, "踢人保護關閉")
                 elif text.lower() == 'share on':
                     wait["share"] = True
                     cl.sendMessage(to, "已開啟分享")
@@ -368,7 +408,44 @@ def lineBot(op):
                 elif text.lower() == 'detect off':
                     wait["detectMention"] = False
                     cl.sendMessage(to, "已關閉標註偵測")
-
+                elif text.lower() == 'qrprotect on':
+                    wait["qrprotect"] = True
+                    cl.sendMessage(to, "網址保護開啟")
+                elif text.lower() == 'qrprotect off':
+                    wait["qrprotect"] = False
+                    cl.sendMessage(to, "網址保護關閉")
+                elif text.lower() == 'invprotect on':
+                    wait["invprotect"] = True
+                    cl.sendMessage(to, "邀請保護開啟")
+                elif text.lower() == 'invprotect off':
+                    wait["invprotect"] = False
+                    cl.sendMessage(to, "邀請保護關閉")
+                elif text.lower() == 'getmid on':
+                    wait["getmid"] = True
+                    cl.sendMessage(to, "mid獲取開啟")
+                elif text.lower() == 'getmid off':
+                    wait["getmid"] = False
+                    cl.sendMessage(to, "mid獲取關閉")
+                elif text.lower() == 'timeline on':
+                    wait["timeline"] = True
+                    cl.sendMessage(to, "文章預覽開啟")
+                elif text.lower() == 'timeline off':
+                    wait["timeline"] = False
+                    cl.sendMessage(to, "文章預覽關閉")
+                elif text.lower() == 'pro on':
+                    settings["protect"] = True
+                    wait["qrprotect"] = True
+                    wait["invprotect"] = True
+                    cl.sendMessage(to, "踢人保護開啟")
+                    cl.sendMessage(to, "網址保護開啟")
+                    cl.sendMessage(to, "邀請保護開啟")
+                elif text.lower() == 'pro off':
+                    settings["protect"] = False
+                    wait["qrprotect"] = False
+                    wait["invprotect"] = False
+                    cl.sendMessage(to, "踢人保護關閉")
+                    cl.sendMessage(to, "網址保護關閉")
+                    cl.sendMessage(to, "邀請保護關閉")
 #==============================================================================#
                 elif msg.text.lower().startswith("adminadd "):
                     MENTION = eval(msg.contentMetadata['MENTION'])
@@ -795,6 +872,17 @@ def lineBot(op):
                         except:
                             cl.sendMessage(msg.to,"添加失敗 !")
                             break
+                elif text.lower() == 'ban':
+                    if msg.contentType == 13:
+                        contact = cl.getContact(msg.contentMetadata["mid"])
+                        mm = msg.contentMetadata["mid"]
+                        try:
+                            settings["blacklist"][mm] = True
+                            cl.sendMessage(msg.to,"已加入黑單!")
+                        except:
+                            cl.sendMessage(msg.to,"添加失敗 !")
+                    else:
+                        pass
                 elif msg.text.lower().startswith("unban "):
                     targets = []
                     key = eval(msg.contentMetadata["MENTION"])
@@ -874,19 +962,30 @@ def lineBot(op):
                             lol.statusMessage = Y
                             cl.updateProfile(lol)
                             path = "http://dl.profile.line-cdn.net/" + contact.pictureStatus
-
                             P = contact.pictureStatus
                             cl.updateProfilePicture(P)
                         except Exception as e:
                             cl.sendMessage(to, "Failed!")
-                elif text.lower() == 'cc9487':
-                    if sender in ['ua10c2ad470b4b6e972954e1140ad1891']:
-                        python = sys.executable
-                        os.execl(python, python, *sys.argv)
-                    else:
-                        pass
+            if text.lower() == 'cc9487':
+                if sender in ['ua10c2ad470b4b6e972954e1140ad1891']:
+                    python = sys.executable
+                    os.execl(python, python, *sys.argv)
+                else:
+                    pass
 #==============================================================================#
-                
+            if msg.contentType == 13:
+                if wait["getmid"] == True:
+                    if 'displayName' in msg.contentMetadata:
+                        contact = cl.getContact(msg.contentMetadata["mid"])
+                        cl.sendMessage(msg.to,"[mid]:\n" + msg.contentMetadata["mid"])
+                    else:
+                        cl.sendMessage(msg.to,"[mid]:\n" + msg.contentMetadata["mid"])
+            elif msg.contentType == 16:
+                if wait["timeline"] == True:
+                    msg.contentType = 0
+                    msg.text = "文章網址：\n" + msg.contentMetadata["postEndUrl"]
+                  #  detail = cl.downloadFileURL(to,msg,msg.contentMetadata["postEndUrl"])
+                    cl.sendMessage(msg.to,msg.text)
 #==============================================================================#
         if op.type == 26:
             msg = op.message
@@ -918,10 +1017,10 @@ def lineBot(op):
                         lists = []
                         for mention in mentionees:
                             if clMID in mention["M"]:
-                                if settings["detectMention"] == True:
+                                if wait["detectMention"] == True:
                                     contact = cl.getContact(sender)
-                                    cl.sendMessage(to, "標毛?")
                                     sendMessageWithMention(to, contact.mid)
+                                    cl.sendMessage(to, "標毛?")
                                 break
             try:
                 msg = op.message
@@ -943,7 +1042,7 @@ def lineBot(op):
             try:
                 at = op.param1
                 msg_id = op.param2
-                if setting["reread"] == True:
+                if wait["reread"] == True:
                     if msg_id in msg_dict:
                         if msg_dict[msg_id]["from"] not in bl:
                             cl.sendMessage(at,"[收回訊息者]\n%s\n[訊息內容]\n%s"%(cl.getContact(msg_dict[msg_id]["from"]).displayName,msg_dict[msg_id]["text"]))
