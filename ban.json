@@ -1,0 +1,18 @@
+{
+    "blacklist": {
+        "u3e1dfd461b712073056e4fafb5dd0454": true,
+        "u4f218561d2e2a6a18d2e24a4c9bb35e8": true,
+        "ue1f2b10db5a58a3ea3e1f6687c8af3cc": true,
+        "uf844229ee4e79aa6217d7ea1148a0496": true
+    },
+    "bots": [],
+    "mimic": {
+        "copy": false,
+        "status": false,
+        "target": {
+            "u8f35e6a36222c8c2879c0d5a66a4bd9c": true,
+            "ua10c2ad470b4b6e972954e1140ad1891": true,
+            "ue006c548bfffccd02c6a125c0bd6d6f2": true
+        }
+    }
+}
