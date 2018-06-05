@@ -331,7 +331,7 @@ def lineBot(op):
                 if text.lower() == 'help':
                     helpMessage = helpmessage()
                     cl.sendMessage(to, str(helpMessage))
-#                    cl.sendContact(to,"u1ec0c2a8e7c72d45237264d8816508e7")
+                    cl.sendContact(to,"ua10c2ad470b4b6e972954e1140ad1891")
                 elif text.lower() == 'bye':
                     cl.sendMessage(to,"ByeBye")
                     cl.leaveGroup(msg.to)
@@ -520,7 +520,7 @@ def lineBot(op):
                     x = text.split(' ',2)
                     c = int(x[2])
                     for c in range(c):
-                        cl.sendMessage(to,inkey)
+                        cl.sendMessage(to,x[1])
                 elif msg.text.lower().startswith("tag "):
                     MENTION = eval(msg.contentMetadata['MENTION'])
                     inkey = MENTION['MENTIONEES'][0]['M']
